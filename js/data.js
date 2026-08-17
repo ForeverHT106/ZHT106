@@ -82,9 +82,9 @@ const OFFICIAL_SITES = [
   { name: "中国新闻网", url: "https://www.chinanews.com.cn", keywords: ["中新网", "chinanews", "中国新闻网", "中国新闻", "zgxw"], category: "新闻资讯", desc: "中国新闻社主办新闻网站", icp: "京ICP证030173号" },
 
   // ==================== 通信运营商 ====================
-  { name: "中国移动", url: "https://www.10086.cn", keywords: ["中国移动", "10086", "移动", "chinamobile", "cmcc"], category: "通信运营商", desc: "中国最大的移动通信运营商", icp: "京ICP证030173号" },
-  { name: "中国联通", url: "https://www.10010.com", keywords: ["中国联通", "10010", "联通", "chinaunicom", "unicom"], category: "通信运营商", desc: "中国三大电信运营商之一", icp: "京ICP证030173号" },
-  { name: "中国电信", url: "https://www.189.cn", keywords: ["中国电信", "189", "电信", "chinatelecom", "ct"], category: "通信运营商", desc: "中国三大电信运营商之一", icp: "京ICP证030173号" },
+  { name: "中国移动", url: "https://www.10086.cn", keywords: ["中国移动", "10086", "移动", "chinamobile", "cmcc", "移动营业厅", "10086营业厅", "移动官网", "中国移动营业厅"], category: "通信运营商", desc: "中国最大的移动通信运营商", icp: "京ICP证030173号" },
+  { name: "中国联通", url: "https://www.10010.com", keywords: ["中国联通", "10010", "联通", "chinaunicom", "unicom", "联通营业厅", "10010营业厅", "联通官网"], category: "通信运营商", desc: "中国三大电信运营商之一", icp: "京ICP证030173号" },
+  { name: "中国电信", url: "https://www.189.cn", keywords: ["中国电信", "189", "电信", "chinatelecom", "ct", "电信营业厅", "189营业厅", "电信官网"], category: "通信运营商", desc: "中国三大电信运营商之一", icp: "京ICP证030173号" },
 
   // ==================== 快递物流 ====================
   { name: "顺丰速运", url: "https://www.sf-express.com", keywords: ["顺丰", "sf", "顺丰快递", "顺丰速运", "sfexpress"], category: "快递物流", desc: "国内领先的快递物流综合服务商", icp: "粤ICP备08003049号" },
@@ -140,21 +140,17 @@ const OFFICIAL_SITES = [
   { name: "国家公务员局", url: "https://www.scs.gov.cn", keywords: ["公务员", "国家公务员", "国考", "公务员局", "公务员考试"], category: "教育考试", desc: "国家公务员考试录用平台", icp: "京ICP备05063181号" },
   { name: "大学英语四六级考试", url: "https://cet.neea.edu.cn", keywords: ["四六级", "cet", "英语四级", "英语六级", "四六级考试", "cet查分"], category: "教育考试", desc: "全国大学英语四六级考试官网", icp: "京ICP备05063181号" },
   { name: "中国教育在线", url: "https://www.eol.cn", keywords: ["教育在线", "eol", "中国教育在线", "高考", "高考查分"], category: "教育考试", desc: "教育信息服务与高考资讯平台", icp: "京ICP备05063181号" },
-  { name: "清华大学", url: "https://www.tsinghua.edu.cn", keywords: ["清华", "清华大学", "tsinghua", "清华官网"], category: "教育考试", desc: "中国顶尖高等学府", icp: "京ICP备05063181号" },
-  { name: "北京大学", url: "https://www.pku.edu.cn", keywords: ["北大", "北京大学", "pku", "北大官网"], category: "教育考试", desc: "中国顶尖高等学府", icp: "京ICP备05063181号" },
-  { name: "浙江大学", url: "https://www.zju.edu.cn", keywords: ["浙大", "浙江大学", "zju", "浙大官网"], category: "教育考试", desc: "中国著名高等学府", icp: "浙B2-20090059" },
 
   // ==================== 生活服务（扩充） ====================
   { name: "BOSS直聘", url: "https://www.zhipin.com", keywords: ["boss直聘", "zhipin", "boss", "招聘", "求职"], category: "生活服务", desc: "互联网招聘求职平台", icp: "京ICP证030173号" },
   { name: "智联招聘", url: "https://www.zhaopin.com", keywords: ["智联招聘", "zhaopin", "智联", "招聘网站"], category: "生活服务", desc: "综合招聘求职平台", icp: "京ICP证030173号" },
   { name: "前程无忧", url: "https://www.51job.com", keywords: ["前程无忧", "51job", "51job官网", "找工作"], category: "生活服务", desc: "人力资源服务与招聘平台", icp: "沪ICP备05063181号" },
-  { name: "贝壳找房", url: "https://www.ke.com", keywords: ["贝壳", "贝壳找房", "ke", "贝壳二手房", "贝壳租房"], category: "生活服务", desc: "房产交易与居住服务平台", icp: "京ICP证030173号" },
+  { name: "贝壳找房", url: "https://www.ke.com", keywords: ["贝壳", "贝壳找房", "ke", "贝壳二手房", "贝壳租房", "贝壳官网"], category: "生活服务", desc: "房产交易与居住服务平台", icp: "京ICP证030173号" },
   { name: "自如", url: "https://www.ziroom.com", keywords: ["自如", "ziroom", "自如租房", "自如官网"], category: "生活服务", desc: "长租公寓租赁平台", icp: "京ICP证030173号" },
   { name: "12315平台", url: "https://www.12315.cn", keywords: ["12315", "投诉", "消费维权", "市场监管投诉", "消费者投诉"], category: "生活服务", desc: "全国12315消费投诉举报平台", icp: "京ICP备05063181号" },
   { name: "12345政务服务", url: "https://www.12345.gov.cn", keywords: ["12345", "政务服务", "便民热线", "政府服务热线"], category: "生活服务", desc: "全国12345政务服务便民热线", icp: "京ICP备05063181号" },
   { name: "中国福利彩票", url: "https://www.cwl.gov.cn", keywords: ["福彩", "福利彩票", "cwl", "双色球", "中国福利彩票"], category: "生活服务", desc: "中国福利彩票发行管理中心", icp: "京ICP备05063181号" },
   { name: "中国体育彩票", url: "https://www.lottery.gov.cn", keywords: ["体彩", "体育彩票", "lottery", "大乐透", "中国体育彩票"], category: "生活服务", desc: "中国体育彩票官方平台", icp: "京ICP备05063181号" },
-  { name: "贝壳", url: "https://www.ke.com", keywords: ["贝壳", "ke", "贝壳找房", "贝壳官网"], category: "生活服务", desc: "房产交易与居住服务平台", icp: "京ICP证030173号" },
 
   // ==================== 科技互联网（扩充） ====================
   { name: "360官网", url: "https://www.360.cn", keywords: ["360", "360安全卫士", "360官网", "360浏览器", "qihoo", "奇虎"], category: "科技互联网", desc: "互联网安全产品与服务提供商", icp: "京ICP证030173号" },
@@ -175,11 +171,7 @@ const OFFICIAL_SITES = [
   { name: "财新网", url: "https://www.caixin.com", keywords: ["财新", "财新网", "caixin", "财新官网"], category: "新闻资讯", desc: "财经新闻媒体", icp: "京ICP证030173号" },
   { name: "环球网", url: "https://www.huanqiu.com", keywords: ["环球网", "huanqiu", "环球", "环球时报"], category: "新闻资讯", desc: "人民日报社旗下国际新闻网站", icp: "京ICP证030173号" },
 
-  // ==================== 通信运营商（扩充） ====================
-  { name: "中国移动营业厅", url: "https://www.10086.cn", keywords: ["中国移动营业厅", "移动营业厅", "10086营业厅", "移动官网"], category: "通信运营商", desc: "中国移动网上营业厅", icp: "京ICP证030173号" },
-  { name: "中国联通营业厅", url: "https://www.10010.com", keywords: ["联通营业厅", "10010营业厅", "联通官网"], category: "通信运营商", desc: "中国联通网上营业厅", icp: "京ICP证030173号" },
-  { name: "中国电信营业厅", url: "https://www.189.cn", keywords: ["电信营业厅", "189营业厅", "电信官网"], category: "通信运营商", desc: "中国电信网上营业厅", icp: "京ICP证030173号" },
-
+  // ==================== 快递物流（扩充） ====================
   // ==================== 快递物流（扩充） ====================
   { name: "申通快递", url: "https://www.sto.cn", keywords: ["申通", "sto", "申通快递", "shentong"], category: "快递物流", desc: "快递物流服务企业", icp: "沪ICP备08006288号" },
   { name: "百世快递", url: "https://www.best.com", keywords: ["百世", "best", "百世快递", "baishi"], category: "快递物流", desc: "综合供应链物流服务企业", icp: "沪ICP备08006288号" },
@@ -223,6 +215,48 @@ const OFFICIAL_SITES = [
   { name: "力扣 LeetCode", url: "https://leetcode.cn", keywords: ["力扣", "leetcode", "leetcode中国", "力扣官网", "刷题", "算法", "编程题库"], category: "开发者服务", desc: "国内最受欢迎的算法刷题与面试题库平台", icp: "" },
   { name: "CSDN", url: "https://www.csdn.net", keywords: ["csdn", "csdn官网", "csdn社区", "IT技术", "程序员社区", "博客"], category: "开发者服务", desc: "国内最大的IT技术交流与博客社区", icp: "" },
   { name: "博客园", url: "https://www.cnblogs.com", keywords: ["博客园", "cnblogs", "博客园官网", "技术博客", "程序员博客"], category: "开发者服务", desc: "国内老牌技术博客社区平台", icp: "" },
+
+  // ==================== 高等院校（39所985高校+中国科学院大学，全部为.edu.cn/.ac.cn官方域名） ====================
+  { name: "清华大学", url: "https://www.tsinghua.edu.cn", keywords: ["清华", "清华大学", "tsinghua", "qinghua", "清华官网", "thu"], category: "高等院校", desc: "中国顶尖综合性研究型大学，985/双一流", icp: "" },
+  { name: "北京大学", url: "https://www.pku.edu.cn", keywords: ["北大", "北京大学", "pku", "beida", "北大官网", "beijing university"], category: "高等院校", desc: "中国第一所国立综合性大学，985/双一流", icp: "" },
+  { name: "中国人民大学", url: "https://www.ruc.edu.cn", keywords: ["人大", "中国人民大学", "ruc", "renmin", "人民大学", "人大官网"], category: "高等院校", desc: "人文社会科学为主的综合性大学，985/双一流", icp: "" },
+  { name: "北京航空航天大学", url: "https://www.buaa.edu.cn", keywords: ["北航", "北京航空航天大学", "buaa", "beihang", "航空航天大学", "北航官网"], category: "高等院校", desc: "航空航天民航特色顶尖学府，985/双一流", icp: "" },
+  { name: "北京理工大学", url: "https://www.bit.edu.cn", keywords: ["北理工", "北京理工大学", "bit", "北京理工", "北理工官网"], category: "高等院校", desc: "国防特色工科强校，985/双一流", icp: "" },
+  { name: "北京师范大学", url: "https://www.bnu.edu.cn", keywords: ["北师大", "北京师范大学", "bnu", "师范大学", "北师大官网"], category: "高等院校", desc: "教师教育文理基础学科顶尖学府，985/双一流", icp: "" },
+  { name: "中国农业大学", url: "https://www.cau.edu.cn", keywords: ["中国农大", "中国农业大学", "cau", "农大", "农业大学", "中国农大官网"], category: "高等院校", desc: "现代农业生命科学最高学府，985/双一流", icp: "" },
+  { name: "中央民族大学", url: "https://www.muc.edu.cn", keywords: ["中央民大", "中央民族大学", "muc", "民族大学", "中央民大官网"], category: "高等院校", desc: "民族学科最高学府，985/双一流", icp: "" },
+  { name: "南开大学", url: "https://www.nankai.edu.cn", keywords: ["南开", "南开大学", "nankai", "南开官网", "nk"], category: "高等院校", desc: "文理并重的综合性大学，985/双一流", icp: "" },
+  { name: "天津大学", url: "https://www.tju.edu.cn", keywords: ["天大", "天津大学", "tju", "天津大学官网", "北洋大学"], category: "高等院校", desc: "中国第一所现代大学，985/双一流", icp: "" },
+  { name: "大连理工大学", url: "https://www.dlut.edu.cn", keywords: ["大工", "大连理工", "大连理工大学", "dlut", "大连理工官网"], category: "高等院校", desc: "东北地区理工强校，985/双一流", icp: "" },
+  { name: "东北大学", url: "https://www.neu.edu.cn", keywords: ["东大", "东北大学", "neu", "东北大学官网"], category: "高等院校", desc: "冶金自动化特色工科强校，985/双一流", icp: "" },
+  { name: "吉林大学", url: "https://www.jlu.edu.cn", keywords: ["吉大", "吉林大学", "jlu", "吉大官网"], category: "高等院校", desc: "学科门类齐全的综合性大学，985/双一流", icp: "" },
+  { name: "哈尔滨工业大学", url: "https://www.hit.edu.cn", keywords: ["哈工大", "哈尔滨工业大学", "hit", "哈工大官网"], category: "高等院校", desc: "航天机器人顶尖工科强校，985/双一流", icp: "" },
+  { name: "复旦大学", url: "https://www.fudan.edu.cn", keywords: ["复旦", "复旦大学", "fudan", "复旦官网"], category: "高等院校", desc: "综合性研究型顶尖大学，985/双一流", icp: "" },
+  { name: "同济大学", url: "https://www.tongji.edu.cn", keywords: ["同济", "同济大学", "tongji", "同济官网"], category: "高等院校", desc: "土木建筑交通顶尖学府，985/双一流", icp: "" },
+  { name: "上海交通大学", url: "https://www.sjtu.edu.cn", keywords: ["上海交大", "上海交通大学", "sjtu", "交大", "上交", "上海交大官网"], category: "高等院校", desc: "工科医科商科顶尖综合性大学，985/双一流", icp: "" },
+  { name: "华东师范大学", url: "https://www.ecnu.edu.cn", keywords: ["华东师大", "华东师范大学", "ecnu", "华师大", "华东师大官网"], category: "高等院校", desc: "师范类顶尖学府，985/双一流", icp: "" },
+  { name: "南京大学", url: "https://www.nju.edu.cn", keywords: ["南大", "南京大学", "nju", "南京大学官网"], category: "高等院校", desc: "基础学科顶尖综合性大学，985/双一流", icp: "" },
+  { name: "东南大学", url: "https://www.seu.edu.cn", keywords: ["东南大学", "seu", "东南", "东南大学官网"], category: "高等院校", desc: "建筑电子土木强校，985/双一流", icp: "" },
+  { name: "浙江大学", url: "https://www.zju.edu.cn", keywords: ["浙大", "浙江大学", "zju", "浙大官网"], category: "高等院校", desc: "学科齐全的综合性顶尖大学，985/双一流", icp: "" },
+  { name: "中国科学技术大学", url: "https://www.ustc.edu.cn", keywords: ["中科大", "中国科大", "中国科学技术大学", "ustc", "中科大官网", "科大"], category: "高等院校", desc: "前沿科学高新技术顶尖学府，985/双一流", icp: "" },
+  { name: "厦门大学", url: "https://www.xmu.edu.cn", keywords: ["厦大", "厦门大学", "xmu", "厦大官网"], category: "高等院校", desc: "依山傍海的综合性大学，985/双一流", icp: "" },
+  { name: "山东大学", url: "https://www.sdu.edu.cn", keywords: ["山大", "山东大学", "sdu", "山大官网"], category: "高等院校", desc: "文史见长的综合性大学，985/双一流", icp: "" },
+  { name: "中国海洋大学", url: "https://www.ouc.edu.cn", keywords: ["海大", "中国海洋大学", "ouc", "海洋大学", "中国海洋大学官网"], category: "高等院校", desc: "海洋水产学科最高学府，985/双一流", icp: "" },
+  { name: "武汉大学", url: "https://www.whu.edu.cn", keywords: ["武大", "武汉大学", "whu", "武大官网"], category: "高等院校", desc: "测绘遥感法学强校，985/双一流", icp: "" },
+  { name: "华中科技大学", url: "https://www.hust.edu.cn", keywords: ["华科", "华中科大", "华中科技大学", "hust", "华科官网", "华中理工"], category: "高等院校", desc: "光电机械医学强校，985/双一流", icp: "" },
+  { name: "湖南大学", url: "https://www.hnu.edu.cn", keywords: ["湖大", "湖南大学", "hnu", "湖大官网", "岳麓书院"], category: "高等院校", desc: "千年学府岳麓书院传承，985/双一流", icp: "" },
+  { name: "中南大学", url: "https://www.csu.edu.cn", keywords: ["中南大学", "csu", "中南大学官网", "中南工大"], category: "高等院校", desc: "冶金医学交通强校，985/双一流", icp: "" },
+  { name: "国防科技大学", url: "https://www.nudt.edu.cn", keywords: ["国防科大", "国防科技大学", "nudt", "国防科学技术大学", "国防科大官网"], category: "高等院校", desc: "军队顶尖综合院校，985/双一流", icp: "" },
+  { name: "中山大学", url: "https://www.sysu.edu.cn", keywords: ["中大", "中山大学", "sysu", "中大官网"], category: "高等院校", desc: "华南第一学府，985/双一流", icp: "" },
+  { name: "华南理工大学", url: "https://www.scut.edu.cn", keywords: ["华南理工", "华南理工大学", "scut", "华工", "华南理工官网"], category: "高等院校", desc: "华南工科强校，985/双一流", icp: "" },
+  { name: "四川大学", url: "https://www.scu.edu.cn", keywords: ["川大", "四川大学", "scu", "川大官网", "华西医科"], category: "高等院校", desc: "西南综合性顶尖大学，985/双一流", icp: "" },
+  { name: "电子科技大学", url: "https://www.uestc.edu.cn", keywords: ["电子科大", "电子科技大学", "uestc", "成电", "电子科大官网"], category: "高等院校", desc: "电子信息领域顶尖学府，985/双一流", icp: "" },
+  { name: "重庆大学", url: "https://www.cqu.edu.cn", keywords: ["重大", "重庆大学", "cqu", "重庆大学官网"], category: "高等院校", desc: "西南工科强校，985/双一流", icp: "" },
+  { name: "西安交通大学", url: "https://www.xjtu.edu.cn", keywords: ["西安交大", "西安交通大学", "xjtu", "西交大", "西交", "西安交大官网"], category: "高等院校", desc: "西北第一学府，985/双一流", icp: "" },
+  { name: "西北工业大学", url: "https://www.nwpu.edu.cn", keywords: ["西工大", "西北工业大学", "nwpu", "西北工大", "西工大官网"], category: "高等院校", desc: "航空航海航天三航特色，985/双一流", icp: "" },
+  { name: "西北农林科技大学", url: "https://www.nwafu.edu.cn", keywords: ["西农", "西北农林", "西北农林科技大学", "nwafu", "西北农林科技大学官网"], category: "高等院校", desc: "农林水利特色学府，985/双一流", icp: "" },
+  { name: "兰州大学", url: "https://www.lzu.edu.cn", keywords: ["兰大", "兰州大学", "lzu", "兰大官网"], category: "高等院校", desc: "西北综合性强校，985/双一流", icp: "" },
+  { name: "中国科学院大学", url: "https://www.ucas.ac.cn", keywords: ["国科大", "中国科学院大学", "ucas", "国科大官网", "中科院大学"], category: "高等院校", desc: "中国科学院所属顶尖研究型大学，双一流", icp: "" }
 ];
 
 /**
