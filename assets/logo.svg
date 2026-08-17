@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="kadaGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a73e8"/>
+      <stop offset="1" stop-color="#1557b0"/>
+    </linearGradient>
+  </defs>
+  <!-- 圆角品牌底色 -->
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#kadaGrad)"/>
+  <!-- 鼠标指针：咔哒点击 -->
+  <path d="M29 19 L60 50 L46 52 L51.5 69 L42 72.5 L36.5 56 L22 64 Z" fill="#ffffff"/>
+  <!-- 点击落地小圆点：咔哒声波 -->
+  <circle cx="64" cy="71" r="6.5" fill="#f5a623"/>
+  <circle cx="64" cy="71" r="6.5" fill="none" stroke="#f5a623" stroke-width="2" opacity="0.55">
+    <animate attributeName="r" values="6.5;13" dur="1.6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.55;0" dur="1.6s" repeatCount="indefinite"/>
+  </circle>
+</svg>
