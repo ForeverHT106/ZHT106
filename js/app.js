@@ -29,9 +29,7 @@
   const statCategories = $('statCategories');
   const statCommunity = $('statCommunity');
   const heroCount = $('heroCount');
-  const urlGoInput = $('urlGoInput');
-  const urlGoBtn = $('urlGoBtn');
-  const urlGoMsg = $('urlGoMsg');
+  const searchUrlMsg = $('searchUrlMsg');
   const submitModal = $('submitModal');
   const openSubmitBtn = $('openSubmitBtn');
   const closeSubmitBtn = $('closeSubmitBtn');
@@ -136,8 +134,8 @@
     } catch (e) { /* 存储满时忽略 */ }
   }
 
-  // 规范化 URL 用于去重（去掉协议、尾部斜杠、www 前缀）
-  function normalizeUrl(url) {
+  // 规范化 URL 用于去重（去掉协议、尾部斜杠、www 前缀，返回字符串）
+  function normalizeUrlKey(url) {
     return String(url || '')
       .toLowerCase()
       .replace(/^https?:\/\//, '')
@@ -147,10 +145,10 @@
 
   // 查找站点是否已收录（官方库或社区池）
   function findExistingSite(url) {
-    const target = normalizeUrl(url);
-    const inOfficial = OFFICIAL_SITES.find(function(s) { return normalizeUrl(s.url) === target; });
+    const target = normalizeUrlKey(url);
+    const inOfficial = OFFICIAL_SITES.find(function(s) { return normalizeUrlKey(s.url) === target; });
     if (inOfficial) return { type: 'official', site: inOfficial };
-    const inExtra = getExtraSites().find(function(s) { return normalizeUrl(s.url) === target; });
+    const inExtra = getExtraSites().find(function(s) { return normalizeUrlKey(s.url) === target; });
     if (inExtra) return { type: 'extra', site: inExtra };
     return null;
   }
@@ -262,8 +260,7 @@
         const query = this.getAttribute('data-query');
         searchInput.value = query;
         historyPanel.classList.add('hidden');
-        renderResults(query);
-        scrollToResults();
+        handleSearch(); // 智能识别：网址 → 直达 / 关键词 → 搜索
       });
     });
   }
@@ -352,21 +349,6 @@
     searchBtn.addEventListener('click', handleSearch);
     searchInput.addEventListener('keydown', handleSearchKeydown);
 
-    // 网址直达
-    urlGoBtn.addEventListener('click', goUrlDirect);
-    urlGoInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        goUrlDirect();
-      } else if (e.key === 'Escape') {
-        clearUrlGoState();
-      }
-    });
-    urlGoInput.addEventListener('input', function() {
-      if (urlGoConfirmed) { urlGoConfirmed = false; if (urlGoTimer) clearTimeout(urlGoTimer); }
-      hideUrlGoMsg();
-    });
-
     // 输入时显示建议
     let debounceTimer = null;
     searchInput.addEventListener('input', function(e) {
@@ -417,9 +399,7 @@
 
     // 提交弹窗
     openSubmitBtn.addEventListener('click', function() {
-      loadSubmitDraft(); // 恢复上次未提交的草稿
-      submitModal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+      openSubmitModal(); // 打开提交弹窗（自动恢复上次草稿）
     });
     closeSubmitBtn.addEventListener('click', closeSubmitModal);
     submitModal.addEventListener('click', function(e) {
@@ -540,6 +520,18 @@
     return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
   }
 
+  // 打开提交弹窗；prefillUrl 存在时预填官网地址（未收录网址引导提交），否则恢复上次草稿
+  function openSubmitModal(prefillUrl) {
+    if (prefillUrl) {
+      $('submitUrl').value = prefillUrl;
+      showSubmitMessage('📝 已预填官网地址，请补充网站名称、分类等信息后提交', 'success');
+    } else {
+      loadSubmitDraft(); // 恢复上次未提交的草稿
+    }
+    submitModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
   function closeSubmitModal() {
     saveSubmitDraft(); // 关闭前暂存草稿，下次打开自动恢复
     submitModal.classList.add('hidden');
@@ -618,25 +610,83 @@
       return;
     }
 
+    // 智能识别：网址形式（如 bilibili.com）→ 直达 / 引导提交收录；其余走关键词搜索
+    const urlObj = normalizeUrl(query);
+    if (urlObj) {
+      handleSearchAsUrl(urlObj, query);
+      return;
+    }
+
     suggestions.classList.add('hidden');
     historyPanel.classList.add('hidden');
+    hideSearchUrlMsg();
     addToHistory(query);
     renderResults(query);
     scrollToResults();
   }
 
-  // ==================== 网址直达 ====================
-  let urlGoConfirmed = false;  // 非认证网址二次确认状态
-  let urlGoTimer = null;
+  // 主搜索框输入网址：已收录 → 直达；未收录 → 引导提交收录
+  function handleSearchAsUrl(u, rawQuery) {
+    const url = u.href;
+    const site = matchOfficialSite(u.hostname);
 
-  function hideUrlGoMsg() {
-    if (urlGoMsg) urlGoMsg.classList.add('hidden');
+    suggestions.classList.add('hidden');
+    historyPanel.classList.add('hidden');
+    hideSearchUrlMsg();
+    addToHistory(rawQuery);
+
+    if (site) {
+      const verified = !site.status || site.status === STATUS.APPROVED;
+      showSearchUrlMsg(
+        (verified ? '✅ 已认证：' : '🟠 待核实：') + escapeHtml(site.name) +
+        '（' + escapeHtml(site.url) + '）正在打开…',
+        'success'
+      );
+      window.open(url, '_blank', 'noopener');
+      return;
+    }
+
+    // 未收录 → 引导提交收录（由管理员人工核实），或直接访问
+    showSearchUrlMsg(
+      '⚠️「' + escapeHtml(url) + '」尚未收录。提交收录将由管理员人工核实，或直接访问？',
+      'warn',
+      [
+        { label: '📝 提交收录', kind: 'primary', fn: function() {
+            hideSearchUrlMsg();
+            openSubmitModal(url);
+          } },
+        { label: '直接访问', fn: function() {
+            hideSearchUrlMsg();
+            window.open(url, '_blank', 'noopener');
+          } }
+      ]
+    );
   }
 
-  function showUrlGoMsg(text, type) {
-    if (!urlGoMsg) return;
-    urlGoMsg.textContent = text;
-    urlGoMsg.className = 'url-go-msg' + (type ? ' ' + type : '');
+  // 通用提示条：显示文本 + 可选操作按钮（actions: [{label, kind, fn}]）
+  function showUrlMsg(el, text, type, actions) {
+    if (!el) return;
+    el.textContent = '';
+    const span = document.createElement('span');
+    span.textContent = text;
+    el.appendChild(span);
+    (actions || []).forEach(function(a) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = a.label;
+      btn.className = 'url-go-msg-btn' + (a.kind ? ' ' + a.kind : '');
+      btn.addEventListener('click', a.fn);
+      el.appendChild(btn);
+    });
+    el.className = 'url-go-msg' + (type ? ' ' + type : '');
+  }
+
+  function showSearchUrlMsg(text, type, actions) {
+    showUrlMsg(searchUrlMsg, text, type, actions);
+  }
+
+  function hideSearchUrlMsg() {
+    if (searchUrlMsg) searchUrlMsg.classList.add('hidden');
   }
 
   // 规范化输入为合法 URL，非法返回 null
@@ -651,6 +701,8 @@
     try {
       const u = new URL(raw);
       if (!u.hostname || u.hostname.indexOf('.') < 0) return null;
+      // 纯数字 IP（如 12306 → 0.0.48.18）不是网址，避免数字品牌误判为 IPv4 直达
+      if (!/[a-zA-Z]/.test(u.hostname)) return null;
       return u;
     } catch (e) {
       return null;
@@ -673,54 +725,6 @@
       } catch (e) { /* 忽略坏 URL */ }
     }
     return null;
-  }
-
-  function goUrlDirect() {
-    const u = normalizeUrl(urlGoInput.value);
-    if (!u) {
-      showUrlGoMsg('⚠️ 请输入有效网址，如 bilibili.com 或 https://www.bilibili.com', 'error');
-      return;
-    }
-
-    const url = u.href;
-    const site = matchOfficialSite(u.hostname);
-
-    if (site) {
-      // 已收录 → 直接跳转（官方库无 status 视为已认证，社区站以审核状态为准）
-      const verified = !site.status || site.status === STATUS.APPROVED;
-      showUrlGoMsg(
-        (verified ? '✅ 已认证：' : '🟠 待核实：') + escapeHtml(site.name) +
-        '（' + escapeHtml(site.url) + '）正在打开…',
-        'success'
-      );
-      urlGoConfirmed = false;
-      window.open(url, '_blank', 'noopener');
-      clearUrlGoState(true);   // 保留成功提示，仅清空输入
-      return;
-    }
-
-    // 未收录 → 二次确认，防止误点未知链接
-    if (!urlGoConfirmed) {
-      urlGoConfirmed = true;
-      showUrlGoMsg(
-        '⚠️「' + escapeHtml(url) + '」不在咔哒认证库中。再次点击「直达」确认访问，或先提交收录由管理员核实',
-        'warn'
-      );
-      if (urlGoTimer) clearTimeout(urlGoTimer);
-      urlGoTimer = setTimeout(function() { urlGoConfirmed = false; }, 8000);
-      return;
-    }
-
-    urlGoConfirmed = false;
-    window.open(url, '_blank', 'noopener');
-    clearUrlGoState();
-  }
-
-  function clearUrlGoState(keepMsg) {
-    urlGoInput.value = '';
-    if (!keepMsg) hideUrlGoMsg();
-    if (urlGoTimer) clearTimeout(urlGoTimer);
-    urlGoConfirmed = false;
   }
 
   // ==================== 搜索建议 ====================
@@ -974,7 +978,7 @@
     }
 
     // 生成搜索关键词（名称 + 域名主体）
-    const domainPart = normalizeUrl(url).split('/')[0].replace(/\.[a-z]+$/, '').replace(/[.-]/g, ' ');
+    const domainPart = normalizeUrlKey(url).split('/')[0].replace(/\.[a-z]+$/, '').replace(/[.-]/g, ' ');
     const keywords = [name, domainPart].filter(Boolean);
 
     // 1) 即时收录进社区池（搜索立即可见，标记待审核）

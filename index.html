@@ -86,27 +86,9 @@
           </div>
           <div id="historyList" class="history-list"></div>
         </div>
-      </div>
 
-      <!-- 网址直达 -->
-      <div class="url-go-wrapper">
-        <div class="url-go-box">
-          <svg class="url-go-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <input
-            type="text"
-            id="urlGoInput"
-            class="url-go-input"
-            placeholder="网址直达：输入域名或网址，如 bilibili.com、https://www.bilibili.com"
-            autocomplete="off"
-            spellcheck="false"
-            inputmode="url"
-          >
-          <button id="urlGoBtn" class="url-go-btn">直达</button>
-        </div>
-        <div id="urlGoMsg" class="url-go-msg hidden"></div>
+        <!-- 网址识别提示（输入网址时显示：直达 / 未收录引导提交） -->
+        <div id="searchUrlMsg" class="url-go-msg hidden"></div>
       </div>
 
       <!-- 热门搜索 -->
