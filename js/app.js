@@ -29,6 +29,9 @@
   const statCategories = $('statCategories');
   const statCommunity = $('statCommunity');
   const heroCount = $('heroCount');
+  const urlGoInput = $('urlGoInput');
+  const urlGoBtn = $('urlGoBtn');
+  const urlGoMsg = $('urlGoMsg');
   const submitModal = $('submitModal');
   const openSubmitBtn = $('openSubmitBtn');
   const closeSubmitBtn = $('closeSubmitBtn');
@@ -349,6 +352,21 @@
     searchBtn.addEventListener('click', handleSearch);
     searchInput.addEventListener('keydown', handleSearchKeydown);
 
+    // 网址直达
+    urlGoBtn.addEventListener('click', goUrlDirect);
+    urlGoInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        goUrlDirect();
+      } else if (e.key === 'Escape') {
+        clearUrlGoState();
+      }
+    });
+    urlGoInput.addEventListener('input', function() {
+      if (urlGoConfirmed) { urlGoConfirmed = false; if (urlGoTimer) clearTimeout(urlGoTimer); }
+      hideUrlGoMsg();
+    });
+
     // 输入时显示建议
     let debounceTimer = null;
     searchInput.addEventListener('input', function(e) {
@@ -605,6 +623,104 @@
     addToHistory(query);
     renderResults(query);
     scrollToResults();
+  }
+
+  // ==================== 网址直达 ====================
+  let urlGoConfirmed = false;  // 非认证网址二次确认状态
+  let urlGoTimer = null;
+
+  function hideUrlGoMsg() {
+    if (urlGoMsg) urlGoMsg.classList.add('hidden');
+  }
+
+  function showUrlGoMsg(text, type) {
+    if (!urlGoMsg) return;
+    urlGoMsg.textContent = text;
+    urlGoMsg.className = 'url-go-msg' + (type ? ' ' + type : '');
+  }
+
+  // 规范化输入为合法 URL，非法返回 null
+  function normalizeUrl(input) {
+    let raw = String(input || '').trim();
+    if (!raw) return null;
+    if (/\s/.test(raw)) return null;                  // 含空格视为无效
+    if (/[\u4e00-\u9fa5]/.test(raw)) return null;      // 中文域名暂不支持
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
+      raw = 'https://' + raw;                          // 自动补全协议
+    }
+    try {
+      const u = new URL(raw);
+      if (!u.hostname || u.hostname.indexOf('.') < 0) return null;
+      return u;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 主机名归一化（去 www. 前缀、统一小写）
+  function hostKey(hostname) {
+    return String(hostname).replace(/^www\./, '').toLowerCase();
+  }
+
+  // 在认证库 + 社区池中匹配域名（官方库优先）
+  function matchOfficialSite(hostname) {
+    const key = hostKey(hostname);
+    const community = getExtraSites().filter(function(s) { return s.status !== STATUS.REJECTED; });
+    const all = OFFICIAL_SITES.concat(community);
+    for (let i = 0; i < all.length; i++) {
+      try {
+        if (hostKey(new URL(all[i].url).hostname) === key) return all[i];
+      } catch (e) { /* 忽略坏 URL */ }
+    }
+    return null;
+  }
+
+  function goUrlDirect() {
+    const u = normalizeUrl(urlGoInput.value);
+    if (!u) {
+      showUrlGoMsg('⚠️ 请输入有效网址，如 bilibili.com 或 https://www.bilibili.com', 'error');
+      return;
+    }
+
+    const url = u.href;
+    const site = matchOfficialSite(u.hostname);
+
+    if (site) {
+      // 已收录 → 直接跳转（官方库无 status 视为已认证，社区站以审核状态为准）
+      const verified = !site.status || site.status === STATUS.APPROVED;
+      showUrlGoMsg(
+        (verified ? '✅ 已认证：' : '🟠 待核实：') + escapeHtml(site.name) +
+        '（' + escapeHtml(site.url) + '）正在打开…',
+        'success'
+      );
+      urlGoConfirmed = false;
+      window.open(url, '_blank', 'noopener');
+      clearUrlGoState(true);   // 保留成功提示，仅清空输入
+      return;
+    }
+
+    // 未收录 → 二次确认，防止误点未知链接
+    if (!urlGoConfirmed) {
+      urlGoConfirmed = true;
+      showUrlGoMsg(
+        '⚠️「' + escapeHtml(url) + '」不在咔哒认证库中。再次点击「直达」确认访问，或先提交收录由管理员核实',
+        'warn'
+      );
+      if (urlGoTimer) clearTimeout(urlGoTimer);
+      urlGoTimer = setTimeout(function() { urlGoConfirmed = false; }, 8000);
+      return;
+    }
+
+    urlGoConfirmed = false;
+    window.open(url, '_blank', 'noopener');
+    clearUrlGoState();
+  }
+
+  function clearUrlGoState(keepMsg) {
+    urlGoInput.value = '';
+    if (!keepMsg) hideUrlGoMsg();
+    if (urlGoTimer) clearTimeout(urlGoTimer);
+    urlGoConfirmed = false;
   }
 
   // ==================== 搜索建议 ====================
