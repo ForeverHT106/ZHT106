@@ -1,0 +1,459 @@
+/* ==================== 管理员审核系统 ==================== */
+/* 导航栏右上角管理入口（浅色/暗黑自适应） */
+.admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.admin-link:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.admin-link-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* 窄屏：只保留 🔐 图标，节省导航空间 */
+@media (max-width: 768px) {
+  .admin-link {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .admin-link-text {
+    display: none;
+  }
+}
+
+/* 登录弹窗 */
+.admin-login-content {
+  max-width: 420px;
+}
+
+.admin-login-tip {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--bg-hover);
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.admin-login-message {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.admin-login-message.error {
+  background: rgba(231,76,60,0.1);
+  color: var(--danger);
+}
+
+.admin-login-message.success {
+  background: rgba(26,115,232,0.08);
+  color: var(--primary);
+}
+
+/* 审核面板 */
+.admin-content {
+  max-width: 760px;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-username {
+  font-size: 13px;
+  color: var(--text-light);
+  padding: 4px 10px;
+  background: var(--bg-hover);
+  border-radius: 14px;
+}
+
+.admin-logout-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+.admin-logout-btn:hover {
+  color: var(--danger);
+  background: rgba(231,76,60,0.1);
+}
+
+/* 审核统计 */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 20px 24px 4px;
+}
+
+.admin-stat {
+  background: var(--bg-hover);
+  border-radius: 12px;
+  padding: 14px 8px;
+  text-align: center;
+}
+
+.admin-stat-num {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.admin-stat-label {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* 审核说明 */
+.admin-guide {
+  margin: 14px 24px;
+  padding: 12px 14px;
+  background: var(--mark-bg);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.guide-approve {
+  color: var(--success, #16a34a);
+  font-weight: 700;
+}
+
+.guide-reject {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* 审核 tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-tab {
+  border: none;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.admin-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 审核列表 */
+.admin-list {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-empty {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 14px;
+  padding: 40px 0;
+}
+
+.admin-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  transition: var(--transition);
+}
+
+.admin-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.admin-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  min-width: 0;
+}
+
+.admin-card-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-card-title img {
+  border-radius: 4px;
+}
+
+.admin-card-category {
+  font-size: 12px;
+  color: var(--text-light);
+  background: var(--bg-hover);
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.admin-card-url {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.admin-card-url a {
+  color: var(--primary);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.admin-card-url a:hover {
+  text-decoration: underline;
+}
+
+.admin-card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.admin-card-icp {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.admin-card-time {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.admin-card-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+/* 状态徽章 */
+.admin-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.admin-badge-pending {
+  background: rgba(245,166,35,0.15);
+  color: #b45309;
+}
+
+.admin-badge-approved {
+  background: rgba(22,163,74,0.12);
+  color: #15803d;
+}
+
+.admin-badge-rejected {
+  background: rgba(231,76,60,0.12);
+  color: var(--danger);
+}
+
+[data-theme="dark"] .admin-badge-pending {
+  background: rgba(245,166,35,0.2);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .admin-badge-approved {
+  background: rgba(34,197,94,0.18);
+  color: #4ade80;
+}
+
+[data-theme="dark"] .admin-badge-rejected {
+  background: rgba(248,113,113,0.18);
+  color: #f87171;
+}
+
+/* 审核操作按钮 */
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-note-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input, var(--bg-card));
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: var(--transition);
+}
+
+.admin-note-input:focus {
+  border-color: var(--primary);
+}
+
+.admin-btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.admin-btn-approve {
+  background: #16a34a;
+  color: #fff;
+}
+
+.admin-btn-approve:hover {
+  background: #15803d;
+}
+
+.admin-btn-reject {
+  background: var(--danger);
+  color: #fff;
+}
+
+.admin-btn-reject:hover {
+  filter: brightness(0.9);
+}
+
+.admin-btn-ghost {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.admin-btn-ghost:hover {
+  background: rgba(245,166,35,0.15);
+  color: #b45309;
+}
+
+/* 修改密码 */
+.admin-pwd-section {
+  padding: 18px 24px 24px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.admin-pwd-section h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.admin-pwd-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-pwd-form input {
+  flex: 1;
+  min-width: 130px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input, var(--bg-card));
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: var(--transition);
+}
+
+.admin-pwd-form input:focus {
+  border-color: var(--primary);
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 16px 16px 4px;
+  }
+
+  .admin-guide {
+    margin: 12px 16px;
+  }
+
+  .admin-tabs {
+    padding: 10px 16px;
+    flex-wrap: wrap;
+  }
+
+  .admin-list {
+    padding: 12px 16px;
+  }
+
+  .admin-pwd-section {
+    padding: 14px 16px 18px;
+  }
+
+  .admin-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "咔哒 · 安全直达官方网站",
+  "short_name": "咔哒",
+  "description": "搜索后第一个结果就是官方网站，安全直达，拒绝钓鱼",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
+  "icons": [
+    {
+      "src": "assets/icons/android-chrome-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/android-chrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/favicon.ico",
+      "sizes": "16x16 32x32 48x48 64x64 128x128 256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}

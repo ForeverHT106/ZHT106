@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="咔哒 - 确保搜索结果第一个是官方网站，安全可靠一键直达">
+  <title>咔哒 · 安全直达官方网站</title>
+  <link rel="icon" type="image/x-icon" sizes="any" href="assets/icons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <img src="assets/logo.svg" class="logo-img" alt="咔哒" width="26" height="26">
+        <span class="logo-text">咔哒</span>
+      </a>
+      <div class="nav-links">
+        <a href="#search-section" class="nav-link active">搜索</a>
+        <a href="#favorites" class="nav-link">收藏</a>
+        <a href="#categories" class="nav-link">分类导航</a>
+        <a href="#about" class="nav-link">关于</a>
+      </div>
+      <div class="nav-actions">
+        <a href="#" id="adminLink" class="admin-link" title="管理员登录/审核">
+          <span class="admin-link-icon">🔐</span>
+          <span class="admin-link-text">管理员登录</span>
+        </a>
+        <button id="themeToggle" class="theme-toggle" title="切换深色/浅色模式">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 搜索区域 -->
+  <section id="search-section" class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        咔哒一下<br>
+        <span class="highlight">官网直达</span>
+      </h1>
+      <p class="hero-subtitle">
+        <span id="heroCount">170</span>+ 认证官网 · 全部人工核实 · 拒绝钓鱼 · 安全直达
+      </p>
+
+      <!-- 搜索框 -->
+      <div class="search-box-wrapper">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="输入网站名称、品牌或关键词，如：淘宝、12306、学信网…"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button id="searchBtn" class="search-btn">搜索</button>
+        </div>
+
+        <!-- 搜索建议下拉 -->
+        <div id="suggestions" class="suggestions-dropdown hidden"></div>
+
+        <!-- 搜索历史 -->
+        <div id="historyPanel" class="history-panel hidden">
+          <div class="history-header">
+            <span>🕐 最近搜索</span>
+            <button id="clearHistory" class="history-clear">清空</button>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </div>
+      </div>
+
+      <!-- 热门搜索 -->
+      <div class="hot-searches">
+        <span class="hot-label">🔥 热门搜索：</span>
+        <div class="hot-tags" id="hotTags"></div>
+      </div>
+
+      <!-- 统计信息 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-num" id="statSites">0</span>
+          <span class="stat-label">认证官网</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="statCategories">0</span>
+          <span class="stat-label">覆盖分类</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="statCommunity">0</span>
+          <span class="stat-label">社区收录</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">100%</span>
+          <span class="stat-label">人工核实</span>
+        </div>
+      </div>
+
+      <!-- 信任标识 -->
+      <div class="trust-badges">
+        <div class="trust-badge">
+          <span class="trust-icon">✓</span>
+          <span>人工核实</span>
+        </div>
+        <div class="trust-badge">
+          <span class="trust-icon">🔒</span>
+          <span>HTTPS加密</span>
+        </div>
+        <div class="trust-badge">
+          <span class="trust-icon">📋</span>
+          <span>ICP备案可查</span>
+        </div>
+        <div class="trust-badge">
+          <span class="trust-icon">⚡</span>
+          <span>一键直达</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 搜索结果区域 -->
+  <section id="results-section" class="results-section hidden">
+    <div class="results-container">
+      <div class="results-header">
+        <h2 id="resultsTitle">搜索结果</h2>
+        <button id="clearSearch" class="clear-btn">清除搜索</button>
+      </div>
+      <div id="resultsList" class="results-list"></div>
+    </div>
+  </section>
+
+  <!-- 收藏夹区域 -->
+  <section id="favorites" class="favorites-section">
+    <div class="section-container">
+      <div class="favorites-header">
+        <h2 class="section-title">⭐ 我的收藏</h2>
+        <p class="section-desc">收藏常用官方网站，一键快速访问</p>
+      </div>
+      <div id="favoritesList" class="favorites-list"></div>
+      <div id="favoritesEmpty" class="favorites-empty">
+        <div class="favorites-empty-icon">⭐</div>
+        <p>还没有收藏任何网站</p>
+        <p class="favorites-empty-sub">搜索官网后点击结果上的 ⭐ 即可收藏</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 分类导航区域 -->
+  <section id="categories" class="categories-section">
+    <div class="section-container">
+      <h2 class="section-title">📁 分类导航</h2>
+      <p class="section-desc">按分类浏览已认证的官方网站</p>
+      <div id="categoryGrid" class="category-grid"></div>
+    </div>
+  </section>
+
+  <!-- 关于区域 -->
+  <section id="about" class="about-section">
+    <div class="section-container">
+      <h2 class="section-title">关于「咔哒」</h2>
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-icon">🎯</div>
+          <h3>精准认证</h3>
+          <p>所有收录网站均经过人工核实，确保链接指向真正的官方运营网站，杜绝假冒钓鱼网站。</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🔍</div>
+          <h3>智能搜索</h3>
+          <p>支持中文、拼音、英文缩写等多种搜索方式，输入关键词即可快速找到官方网站。</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">⚡</div>
+          <h3>一键直达</h3>
+          <p>搜索结果中的官方网站可直接点击进入，无需二次跳转，省时省力。</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🛡️</div>
+          <h3>安全可信</h3>
+          <p>展示网站ICP备案信息，帮助用户进一步验证网站真实性，安心访问。</p>
+        </div>
+      </div>
+
+      <!-- 网站收录提交 -->
+      <div class="submit-section">
+        <h3 class="submit-title">📝 没找到你想访问的官网？</h3>
+        <p class="submit-desc">欢迎提交你验证过的官方网站，我们会尽快人工核实并收录</p>
+        <button id="openSubmitBtn" class="submit-btn">提交官方网站</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p class="footer-text">
+        <img src="assets/logo.svg" class="footer-logo" alt="咔哒" width="20" height="20"> 咔哒 · 安全直达官方网站<br>
+        <span class="footer-sub">本站仅提供官方网址导航服务，收录信息均来自公开渠道并经人工核实</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- 回到顶部按钮 -->
+  <button id="backToTop" class="back-to-top hidden" title="回到顶部">↑</button>
+
+  <!-- 网站收录提交弹窗 -->
+  <div id="submitModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📝 提交官方网站</h3>
+        <button id="closeSubmitBtn" class="modal-close" title="关闭">×</button>
+      </div>
+      <form id="submitForm" class="submit-form">
+        <div class="submit-steps">
+          <div class="submit-step"><span class="step-num">1</span>填写提交</div>
+          <div class="submit-step"><span class="step-num">2</span>即时收录 · 待核实</div>
+          <div class="submit-step"><span class="step-num">3</span>审核后官方认证</div>
+        </div>
+        <p class="submit-tip">💡 提交成功后立即进入「社区收录」池，搜索立即可见（带橙色「待核实」标识）；管理员审核通过后将正式收录为「官方认证」官网。</p>
+        <div class="form-group">
+          <label for="submitName">网站名称 *</label>
+          <input type="text" id="submitName" placeholder="如：哔哩哔哩" required>
+        </div>
+        <div class="form-group">
+          <label for="submitUrl">官方网站地址 *</label>
+          <input type="url" id="submitUrl" placeholder="如：https://www.bilibili.com" required>
+        </div>
+        <div class="form-group">
+          <label for="submitCategory">所属分类</label>
+          <select id="submitCategory">
+            <option value="电商购物">电商购物</option>
+            <option value="社交媒体">社交媒体</option>
+            <option value="出行交通">出行交通</option>
+            <option value="金融支付">金融支付</option>
+            <option value="政府机构">政府机构</option>
+            <option value="教育考试">教育考试</option>
+            <option value="生活服务">生活服务</option>
+            <option value="科技互联网">科技互联网</option>
+            <option value="新闻资讯">新闻资讯</option>
+            <option value="通信运营商">通信运营商</option>
+            <option value="快递物流">快递物流</option>
+            <option value="公共服务">公共服务</option>
+            <option value="视频娱乐">视频娱乐</option>
+            <option value="音乐阅读">音乐阅读</option>
+            <option value="国际常用">国际常用</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="submitDesc">网站简介</label>
+          <textarea id="submitDesc" rows="3" placeholder="简要描述该网站的功能或所属机构…"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="submitIcp">ICP备案号（可选）</label>
+          <input type="text" id="submitIcp" placeholder="如：京ICP证030173号">
+        </div>
+        <button type="submit" class="submit-form-btn">提交收录申请</button>
+        <button type="button" id="exportBtn" class="export-btn">📤 导出收录记录（管理员审核用）</button>
+        <p id="submitMessage" class="submit-message hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- 管理员登录弹窗 -->
+  <div id="adminLoginModal" class="modal-overlay hidden">
+    <div class="modal-content admin-login-content">
+      <div class="modal-header">
+        <h3>🔐 管理员登录</h3>
+        <button id="closeAdminLoginBtn" class="modal-close" title="关闭">×</button>
+      </div>
+      <form id="adminLoginForm" class="submit-form">
+        <p class="admin-login-tip">登录后可在审核面板中手动审核社区提交的官方网站</p>
+        <div class="form-group">
+          <label for="adminUsernameInput">管理员账号</label>
+          <input type="text" id="adminUsernameInput" placeholder="默认账号：admin" required>
+        </div>
+        <div class="form-group">
+          <label for="adminPasswordInput">密码</label>
+          <input type="password" id="adminPasswordInput" placeholder="默认密码：kada2026" required>
+        </div>
+        <button type="submit" class="submit-form-btn">登 录</button>
+        <p id="adminLoginMessage" class="admin-login-message hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- 管理员审核面板 -->
+  <div id="adminModal" class="modal-overlay hidden">
+    <div class="modal-content admin-content">
+      <div class="modal-header">
+        <h3>🛡️ 管理员审核面板</h3>
+        <div class="admin-header-right">
+          <span id="adminUsername" class="admin-username"></span>
+          <button id="adminLogoutBtn" class="admin-logout-btn">退出登录</button>
+          <button id="closeAdminBtn" class="modal-close" title="关闭">×</button>
+        </div>
+      </div>
+
+      <!-- 审核统计 -->
+      <div id="adminStats" class="admin-stats"></div>
+
+      <!-- 审核说明 -->
+      <div class="admin-guide">
+        <strong>审核流程：</strong>用户提交的网站进入「待审核」→ 人工核实后点击 <span class="guide-approve">✓ 通过</span>（正式成为官方认证，搜索结果带绿色徽章）或 <span class="guide-reject">✗ 拒绝</span>（从搜索结果中移除，仅管理员可见记录）。
+      </div>
+
+      <!-- 审核分类 tabs -->
+      <div id="adminTabs" class="admin-tabs"></div>
+
+      <!-- 审核列表 -->
+      <div id="adminList" class="admin-list"></div>
+
+      <!-- 修改密码 -->
+      <div class="admin-pwd-section">
+        <h4>🔑 修改管理员密码</h4>
+        <form id="changePwdForm" class="admin-pwd-form">
+          <input type="password" id="currentPwd" placeholder="当前密码" required>
+          <input type="password" id="newPwd" placeholder="新密码（至少6位）" required>
+          <input type="password" id="confirmPwd" placeholder="确认新密码" required>
+          <button type="submit" class="admin-btn admin-btn-approve">更新密码</button>
+        </form>
+        <p id="changePwdMessage" class="admin-login-message hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
