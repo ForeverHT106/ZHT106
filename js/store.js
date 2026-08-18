@@ -3,11 +3,11 @@
  *
  * 两种模式：
  *   1. 本地模式（默认）：社区收录数据存浏览器 localStorage，零依赖、零请求
- *   2. 云端模式：接入腾讯云开发 CloudBase，社区收录数据存云端数据库，所有访客共享
+ *   2. 云端模式：接入腾讯云 CloudBase PostgreSQL，通过 PostgREST HTTP API 直接读写
  *
  * 启用云端模式只需修改下方 CLOUD_CONFIG：
  *   enabled: true
- *   envId:   '你的云开发环境 ID'（云开发控制台 → 概览 → 环境 ID）
+ *   envId: '你的云开发环境 ID'
  *
  * 云端模式下本地偏好（主题/历史/收藏/草稿）仍存 localStorage，不受影响。
  * 云端不可用（网络/未配置/额度超限）时自动回退本地模式，网站照常工作。
@@ -17,16 +17,8 @@
 
   // ==================== 云端配置（启用前请修改） ====================
   var CLOUD_CONFIG = {
-    enabled: true,           // true = 启用云端存储
-    envId: 'breeze-0-d7gyop0ga59286558',   // 云开发环境 ID
-    region: 'ap-shanghai',   // 环境地域（控制台可查）：ap-shanghai / ap-guangzhou / ap-beijing 等
-    collection: 'sites',     // 社区收录集合名（需与云函数一致）
-    // Publishable Key（公开密钥）：云开发控制台 → API Key 管理页 → publish_key。
-    // 填入后可绕过匿名登录开关，直接以匿名权限访问云函数/数据库。
-    accessKey: 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImI0MGYzMzAwLTE2ZjYtNDI4My04NDg1LTVmOGUyYWI0YjFmZSJ9.eyJpc3MiOiJodHRwczovL2JyZWV6ZS0wLWQ3Z3lvcDBnYTU5Mjg2NTU4LmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJicmVlemUtMC1kN2d5b3AwZ2E1OTI4NjU1OCIsImV4cCI6NDA5MDcyNjkzOCwiaWF0IjoxNzg3MDQzNzM4LCJub25jZSI6IjRyRms3Z3JqUl9XYmExMXdjNlFyYkEiLCJhdF9oYXNoIjoiNHJGazdncmpSX1diYTExd2M2UXJiQSIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJicmVlemUtMC1kN2d5b3AwZ2E1OTI4NjU1OCIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJyb2xlIjoiYW5vbiIsImlzX2Fub255bW91cyI6dHJ1ZSwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiYW5vbnltb3VzIiwicHJvdmlkZXJzIjpbImFub255bW91cyJdfSwidXNlcl9tZXRhZGF0YSI6eyJuYW1lIjoiQW5vbnltb3VzIn0sInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.WAksLBEThYI1XTPe4em1rSUa9jn0ISWDB3p-5PSlG1CnU2atgr5ZHKwLAUXoZKd70dnpGMQCKdJpmX8yQ4euhQdDpF1-tMIZC4wJsxKjdcSdp6rGHaNDjdfcUQhsB-shtw4q8LFzos0zCpuo98gMqTVcOqnKnPCUTLN6chWJIKupX6KDjslHNDRQHVbedVzGM8M11bpY60NhXUYMcW9fXwFW80u0kQ2Yh8U-N_YfuZ3oyCOmusfByyrHaA2dd8TbrtHHY6MY192ktqAaz7Jgs11YbQf56yDh96DwwVMETLK6gOcTOBH5hZG6jAmTo2AufrRIqCqEu6JD75te-151LQ',
-    // 官方 CDN latest（v3）：https://docs.cloudbase.net/api-reference/webv3/initialization
-    // v3 对 Publishable Key 直连支持最完善（init 传 accessKey 后无需登录直接访问）
-    sdkUrl: 'https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js'
+    enabled: true,                         // true = 启用云端存储
+    envId: 'breeze-0-d7gyop0ga59286558'    // 云开发环境 ID
   };
 
   // ==================== 本地存储键（本地模式 / 回退缓存） ====================
@@ -38,13 +30,16 @@
   var STATUS = { PENDING: 'pending', APPROVED: 'approved', REJECTED: 'rejected' };
 
   // ==================== 内部状态 ====================
-  var isCloud = false;    // 当前是否实际使用云端（enabled 且初始化成功）
-  var cloudApp = null;    // CloudBase app 实例
-  var cache = null;       // 云端数据内存缓存
-  var ready = false;      // 初始化流程已结束（成功或失败回退）
-  var readyFns = [];      // onReady 回调
-  var adminCred = null;   // 云端管理员登录凭据（仅存内存，不落盘）
-  var lastError = null;   // 最近一次初始化失败原因（诊断用）
+  var isCloud = false;          // 当前是否实际使用云端（enabled 且初始化成功）
+  var cache = null;             // 云端数据内存缓存（仅 approved 站点）
+  var ready = false;            // 初始化流程已结束（成功或失败回退）
+  var readyFns = [];            // onReady 回调
+  var adminCred = null;         // 云端管理员登录凭据（仅存内存，不落盘）
+  var lastError = null;         // 最近一次初始化失败原因（诊断用）
+
+  var token = null;             // 匿名 access_token
+  var tokenExpiresAt = 0;       // token 过期时间戳（毫秒）
+  var deviceId = null;          // 匿名登录设备 ID（会话内复用）
 
   // ==================== 工具 ====================
   function readJSON(key, fallback) {
@@ -58,72 +53,118 @@
     try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* ignore */ }
   }
 
-  function loadScript(url) {
-    return new Promise(function(resolve, reject) {
-      var s = window.document.createElement('script');
-      s.src = url;
-      s.onload = resolve;
-      s.onerror = function() { reject(new Error('CloudBase SDK 加载失败')); };
-      window.document.head.appendChild(s);
+  function baseUrl() {
+    return 'https://' + CLOUD_CONFIG.envId + '.api.tcloudbasegateway.com/v1/rdb/rest';
+  }
+
+  function authUrl() {
+    return 'https://' + CLOUD_CONFIG.envId + '.api.tcloudbasegateway.com/auth/v1/signin/anonymously';
+  }
+
+  function makeDeviceId() {
+    var s = '';
+    try {
+      s = window.navigator.userAgent || '';
+      s += window.navigator.language || '';
+      s += window.screen ? (window.screen.width + 'x' + window.screen.height) : '';
+    } catch (e) { /* ignore */ }
+    return 'kada-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '-' + hashString(s).slice(0, 8);
+  }
+
+  function hashString(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) {
+      h = ((h << 5) - h) + str.charCodeAt(i);
+      h |= 0;
+    }
+    return Math.abs(h).toString(16);
+  }
+
+  function fetchJson(url, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    if (options.body && typeof options.body === 'object') {
+      options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/json';
+      options.body = JSON.stringify(options.body);
+    }
+    return window.fetch(url, options).then(function(res) {
+      return res.text().then(function(text) {
+        var data;
+        try { data = text ? JSON.parse(text) : null; } catch (e) { data = { raw: text }; }
+        return { res: res, data: data };
+      });
     });
   }
 
-  // ==================== 云端调用封装 ====================
-  function callCloud(action, payload) {
-    var data = Object.assign({ action: action }, payload || {});
-    if (adminCred) data.__admin = adminCred; // 管理员凭据随请求携带（仅内存，HTTPS）
-    return cloudApp.callFunction({ name: 'kadaApi', data: data })
-      .then(function(res) {
-        return res && res.result ? res.result : { ok: false, msg: '云函数返回异常' };
-      })
-      .catch(function(err) {
-        return { ok: false, msg: '云端请求失败：' + (err && err.message ? err.message : '网络错误') };
+  function getToken() {
+    if (token && Date.now() < tokenExpiresAt - 60000) {
+      return Promise.resolve(token);
+    }
+    deviceId = deviceId || makeDeviceId();
+    return fetchJson(authUrl(), {
+      method: 'POST',
+      headers: { 'x-device-id': deviceId },
+      body: {}
+    }).then(function(r) {
+      if (!r.res.ok || !r.data || !r.data.access_token) {
+        throw new Error(r.data && (r.data.message || r.data.error_description) ? (r.data.message || r.data.error_description) : '匿名登录失败');
+      }
+      token = r.data.access_token;
+      var exp = r.data.expires_in ? parseInt(r.data.expires_in, 10) : 7200;
+      tokenExpiresAt = Date.now() + exp * 1000;
+      return token;
+    });
+  }
+
+  function api(path, options, retry) {
+    retry = retry === undefined ? true : retry;
+    return getToken().then(function(tk) {
+      options = options || {};
+      options.headers = options.headers || {};
+      options.headers['Authorization'] = 'Bearer ' + tk;
+      return fetchJson(baseUrl() + path, options);
+    }).then(function(r) {
+      if (r.res.status === 401 && retry) {
+        token = null;
+        tokenExpiresAt = 0;
+        return api(path, options, false);
+      }
+      if (!r.res.ok) {
+        var msg = r.data && (r.data.message || r.data.msg || r.data.error_description);
+        throw new Error(msg || ('HTTP ' + r.res.status));
+      }
+      return r.data;
+    });
+  }
+
+  function loadCloudSites() {
+    return api('/sites?order=created_at.desc', { method: 'GET' })
+      .then(function(list) {
+        cache = Array.isArray(list) ? list : [];
       });
   }
 
   // ==================== 云端初始化（异步，不阻塞页面） ====================
-  // 注意：新版 CloudBase 环境为 PostgreSQL 数据库，没有文档数据库（MongoDB）实例，
-  // 因此不能用 cloudApp.database() 直连集合。所有读写统一走云函数 kadaApi（SQL 版），
-  // 初始化时调用一次 getAllSites 验证整条链路（SDK → accessKey → 云函数 → PG 建表 → 查询）。
   function initCloud() {
     if (!CLOUD_CONFIG.enabled || !CLOUD_CONFIG.envId) {
       ready = true;
       fireReady();
       return;
     }
-    loadScript(CLOUD_CONFIG.sdkUrl)
+    if (!window.fetch) {
+      lastError = '浏览器不支持 fetch，已回退本地模式';
+      ready = true;
+      console.warn('[KadaStore]', lastError);
+      fireReady();
+      return;
+    }
+    loadCloudSites()
       .then(function() {
-        if (!window.cloudbase) throw new Error('CloudBase SDK 未注入');
-        var initOpts = { env: CLOUD_CONFIG.envId, region: CLOUD_CONFIG.region };
-        if (CLOUD_CONFIG.accessKey) {
-          // Publishable Key 模式（官方文档）：init 传 accessKey 后【无需登录】直接访问资源。
-          // 绝不能在此之后调用 signInAnonymously —— 匿名登录被禁用时会破坏凭证状态，
-          // 导致后续请求报 "credentials not found"。
-          initOpts.accessKey = CLOUD_CONFIG.accessKey;
-          console.warn('[KadaStore] Publishable Key 直连模式，跳过登录');
-        } else {
-          // 无 accessKey：尝试新版 Identity 匿名登录（PG 环境前端访问需配合 RLS，一般用不上）
-          initOpts.clientId = CLOUD_CONFIG.envId;
-        }
-        cloudApp = window.cloudbase.init(initOpts);
-        if (CLOUD_CONFIG.accessKey) return Promise.resolve(null);
-        return cloudApp.auth({ persistence: 'local' }).signInAnonymously().catch(function(err) {
-          console.warn('[KadaStore] 匿名登录失败（未配置 accessKey 时无法访问资源）：', JSON.stringify(err));
-          throw new Error('匿名登录失败：' + (err && (err.error_description || err.message) ? (err.error_description || err.message) : '未知错误'));
-        });
-      })
-      .then(function() {
-        return callCloud('getAllSites', {});
-      })
-      .then(function(res) {
-        if (!res || !res.ok) throw new Error(res && res.msg ? res.msg : '云函数返回异常');
-        cache = (res.sites || []).slice();
         isCloud = true;
         ready = true;
         fireReady();
       })
       .catch(function(err) {
-        // 云端不可用 → 回退本地模式（记录原因，F12 控制台可查）
         isCloud = false;
         lastError = err && err.message ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err));
         ready = true;
@@ -153,31 +194,39 @@
       return readJSON(LOCAL_KEYS.EXTRA_SITES, []);
     },
 
-    // 保存社区站点（本地模式落盘；云端模式仅更新内存缓存，云端数据以云函数为准）
+    // 保存社区站点（本地模式落盘；云端模式仅更新内存缓存，云端数据以接口为准）
     saveCommunitySites: function(sites) {
       if (isCloud) { cache = sites.slice(); return; }
       writeJSON(LOCAL_KEYS.EXTRA_SITES, sites);
     },
 
-    // 提交收录：返回 Promise<{ok, msg, site?}>（site 含云端 _id）
+    // 提交收录：返回 Promise<{ok, msg, site?}>
     submitSite: function(data) {
       if (isCloud) {
-        return callCloud('submit', {
-          name: data.name, url: data.url, category: data.category,
-          desc: data.desc, icp: data.icp, keywords: data.keywords || []
-        }).then(function(r) {
-          if (r.ok && r.site && cache) cache = [r.site].concat(cache);
-          return r;
-        });
+        var payload = {
+          p_name: data.name,
+          p_url: data.url,
+          p_category: data.category,
+          p_description: data.desc || '',
+          p_icp: data.icp || '',
+          p_keywords: JSON.stringify(data.keywords || []),
+          p_source: 'community'
+        };
+        return api('/rpc/submit_site', { method: 'POST', body: payload })
+          .then(function(r) {
+            // 提交成功后刷新缓存，让管理员面板立即看到 pending 记录
+            if (r.ok) loadCloudSites().catch(function() { /* ignore */ });
+            return r;
+          });
       }
       // 本地模式
       var sites = readJSON(LOCAL_KEYS.EXTRA_SITES, []);
       var site = {
         name: data.name, url: data.url, category: data.category,
-        desc: data.desc, icp: data.icp, keywords: data.keywords || [],
+        description: data.desc || '', icp: data.icp || '', keywords: data.keywords || [],
         verified: false, source: 'community',
         status: STATUS.PENDING,
-        submittedAt: new Date().toISOString()
+        createdAt: new Date().toISOString()
       };
       sites.unshift(site);
       writeJSON(LOCAL_KEYS.EXTRA_SITES, sites);
@@ -187,7 +236,21 @@
     // 管理员审核：返回 Promise<{ok, msg}>
     reviewSite: function(url, status, note) {
       if (isCloud) {
-        return callCloud('review', { url: url, status: status, note: note || '' });
+        if (!adminCred) return Promise.resolve({ ok: false, msg: '未登录' });
+        var payload = {
+          p_password: adminCred.password,
+          p_url: url,
+          p_status: status,
+          p_note: note || ''
+        };
+        return api('/rpc/admin_review', { method: 'POST', body: payload })
+          .then(function(r) {
+            if (r.ok) {
+              // 审核成功后刷新 approved 缓存
+              loadCloudSites().catch(function() { /* ignore */ });
+            }
+            return r;
+          });
       }
       var sites = readJSON(LOCAL_KEYS.EXTRA_SITES, []);
       var site = sites.find(function(s) { return s.url === url; });
@@ -197,33 +260,42 @@
       site.reviewNote = note || '';
       site.verified = status === STATUS.APPROVED;
       writeJSON(LOCAL_KEYS.EXTRA_SITES, sites);
-      return Promise.resolve({ ok: true });
+      return Promise.resolve({ ok: true, msg: '操作成功' });
     },
 
-    // 管理员登录（云端模式校验；本地模式返回 ok 由 app.js 自行校验）：返回 Promise<{ok, msg}>
+    // 管理员登录：返回 Promise<{ok, msg}>
     adminLogin: function(username, password) {
       if (isCloud) {
-        return callCloud('login', { username: username, password: password }).then(function(r) {
+        return api('/rpc/admin_login', {
+          method: 'POST',
+          body: { p_username: username, p_password: password }
+        }).then(function(r) {
           if (r.ok) adminCred = { username: username, password: password };
           return r;
         });
       }
-      return Promise.resolve({ ok: true });
+      return Promise.resolve({ ok: true, msg: '本地模式' });
     },
 
-    // 修改密码（云端模式；本地模式由 app.js 自行校验）：返回 Promise<{ok, msg}>
+    // 修改密码：返回 Promise<{ok, msg}>
     changePassword: function(currentPwd, newPwd) {
       if (isCloud) {
-        return callCloud('changePwd', { currentPwd: currentPwd, newPwd: newPwd });
+        return api('/rpc/admin_change_pwd', {
+          method: 'POST',
+          body: { p_current: currentPwd, p_new: newPwd }
+        }).then(function(r) {
+          if (r.ok && adminCred) adminCred.password = newPwd;
+          return r;
+        });
       }
-      return Promise.resolve({ ok: true });
+      return Promise.resolve({ ok: true, msg: '本地模式' });
     },
 
     // 云端管理员用户名（内存）
     getAdminUsername: function() {
       return adminCred ? adminCred.username : '';
     },
-    // 云端模式登录态（内存凭据是否存在）；本地模式恒 true（由 sessionStorage 管理）
+    // 云端模式登录态（内存凭据是否存在）；本地模式恒 true
     hasAdminCred: function() {
       return isCloud ? !!adminCred : true;
     },
