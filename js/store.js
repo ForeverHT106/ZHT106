@@ -40,7 +40,6 @@
   // ==================== 内部状态 ====================
   var isCloud = false;    // 当前是否实际使用云端（enabled 且初始化成功）
   var cloudApp = null;    // CloudBase app 实例
-  var db = null;          // CloudBase 数据库实例
   var cache = null;       // 云端数据内存缓存
   var ready = false;      // 初始化流程已结束（成功或失败回退）
   var readyFns = [];      // onReady 回调
@@ -83,6 +82,9 @@
   }
 
   // ==================== 云端初始化（异步，不阻塞页面） ====================
+  // 注意：新版 CloudBase 环境为 PostgreSQL 数据库，没有文档数据库（MongoDB）实例，
+  // 因此不能用 cloudApp.database() 直连集合。所有读写统一走云函数 kadaApi（SQL 版），
+  // 初始化时调用一次 getAllSites 验证整条链路（SDK → accessKey → 云函数 → PG 建表 → 查询）。
   function initCloud() {
     if (!CLOUD_CONFIG.enabled || !CLOUD_CONFIG.envId) {
       ready = true;
@@ -100,22 +102,22 @@
           initOpts.accessKey = CLOUD_CONFIG.accessKey;
           console.warn('[KadaStore] Publishable Key 直连模式，跳过登录');
         } else {
-          // 无 accessKey：走新版 Identity 匿名登录
+          // 无 accessKey：尝试新版 Identity 匿名登录（PG 环境前端访问需配合 RLS，一般用不上）
           initOpts.clientId = CLOUD_CONFIG.envId;
         }
         cloudApp = window.cloudbase.init(initOpts);
-        if (CLOUD_CONFIG.accessKey) return null; // 无需登录
-        return cloudApp.auth({ persistence: 'local' }).signInAnonymously();
+        if (CLOUD_CONFIG.accessKey) return Promise.resolve(null);
+        return cloudApp.auth({ persistence: 'local' }).signInAnonymously().catch(function(err) {
+          console.warn('[KadaStore] 匿名登录失败（未配置 accessKey 时无法访问资源）：', JSON.stringify(err));
+          throw new Error('匿名登录失败：' + (err && (err.error_description || err.message) ? (err.error_description || err.message) : '未知错误'));
+        });
       })
       .then(function() {
-        db = cloudApp.database();
-        return db.collection(CLOUD_CONFIG.collection)
-          .orderBy('submittedAt', 'desc')
-          .limit(1000)
-          .get();
+        return callCloud('getAllSites', {});
       })
       .then(function(res) {
-        cache = res && res.data ? res.data : [];
+        if (!res || !res.ok) throw new Error(res && res.msg ? res.msg : '云函数返回异常');
+        cache = (res.sites || []).slice();
         isCloud = true;
         ready = true;
         fireReady();
