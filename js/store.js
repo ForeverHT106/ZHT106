@@ -24,7 +24,9 @@
     // Publishable Key（公开密钥）：云开发控制台 → API Key 管理页 → publish_key。
     // 填入后可绕过匿名登录开关，直接以匿名权限访问云函数/数据库。
     accessKey: 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImI0MGYzMzAwLTE2ZjYtNDI4My04NDg1LTVmOGUyYWI0YjFmZSJ9.eyJpc3MiOiJodHRwczovL2JyZWV6ZS0wLWQ3Z3lvcDBnYTU5Mjg2NTU4LmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJicmVlemUtMC1kN2d5b3AwZ2E1OTI4NjU1OCIsImV4cCI6NDA5MDcyNjkzOCwiaWF0IjoxNzg3MDQzNzM4LCJub25jZSI6IjRyRms3Z3JqUl9XYmExMXdjNlFyYkEiLCJhdF9oYXNoIjoiNHJGazdncmpSX1diYTExd2M2UXJiQSIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJicmVlemUtMC1kN2d5b3AwZ2E1OTI4NjU1OCIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJyb2xlIjoiYW5vbiIsImlzX2Fub255bW91cyI6dHJ1ZSwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiYW5vbnltb3VzIiwicHJvdmlkZXJzIjpbImFub255bW91cyJdfSwidXNlcl9tZXRhZGF0YSI6eyJuYW1lIjoiQW5vbnltb3VzIn0sInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.WAksLBEThYI1XTPe4em1rSUa9jn0ISWDB3p-5PSlG1CnU2atgr5ZHKwLAUXoZKd70dnpGMQCKdJpmX8yQ4euhQdDpF1-tMIZC4wJsxKjdcSdp6rGHaNDjdfcUQhsB-shtw4q8LFzos0zCpuo98gMqTVcOqnKnPCUTLN6chWJIKupX6KDjslHNDRQHVbedVzGM8M11bpY60NhXUYMcW9fXwFW80u0kQ2Yh8U-N_YfuZ3oyCOmusfByyrHaA2dd8TbrtHHY6MY192ktqAaz7Jgs11YbQf56yDh96DwwVMETLK6gOcTOBH5hZG6jAmTo2AufrRIqCqEu6JD75te-151LQ',
-    sdkUrl: 'https://static.cloudbase.net/cloudbase-js-sdk/2.17.3/cloudbase.full.js'
+    // 官方 CDN latest（v3）：https://docs.cloudbase.net/api-reference/webv3/initialization
+    // v3 对 Publishable Key 直连支持最完善（init 传 accessKey 后无需登录直接访问）
+    sdkUrl: 'https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js'
   };
 
   // ==================== 本地存储键（本地模式 / 回退缓存） ====================
@@ -90,21 +92,20 @@
     loadScript(CLOUD_CONFIG.sdkUrl)
       .then(function() {
         if (!window.cloudbase) throw new Error('CloudBase SDK 未注入');
-        var initOpts = {
-          env: CLOUD_CONFIG.envId,
-          region: CLOUD_CONFIG.region,
-          clientId: CLOUD_CONFIG.envId   // 新版 CloudBase Identity 需要 clientId
-        };
-        if (CLOUD_CONFIG.accessKey) initOpts.accessKey = CLOUD_CONFIG.accessKey; // Publishable Key
+        var initOpts = { env: CLOUD_CONFIG.envId, region: CLOUD_CONFIG.region };
+        if (CLOUD_CONFIG.accessKey) {
+          // Publishable Key 模式（官方文档）：init 传 accessKey 后【无需登录】直接访问资源。
+          // 绝不能在此之后调用 signInAnonymously —— 匿名登录被禁用时会破坏凭证状态，
+          // 导致后续请求报 "credentials not found"。
+          initOpts.accessKey = CLOUD_CONFIG.accessKey;
+          console.warn('[KadaStore] Publishable Key 直连模式，跳过登录');
+        } else {
+          // 无 accessKey：走新版 Identity 匿名登录
+          initOpts.clientId = CLOUD_CONFIG.envId;
+        }
         cloudApp = window.cloudbase.init(initOpts);
-        // 尝试匿名登录；配置了 accessKey 时即使登录失败也不阻断（accessKey 本身可访问资源）
-        return cloudApp.auth({ persistence: 'local' }).signInAnonymously().catch(function(err) {
-          if (CLOUD_CONFIG.accessKey) {
-            console.warn('[KadaStore] 匿名登录未生效（已配置 accessKey，继续尝试访问）:', JSON.stringify(err));
-            return null;
-          }
-          throw err;
-        });
+        if (CLOUD_CONFIG.accessKey) return null; // 无需登录
+        return cloudApp.auth({ persistence: 'local' }).signInAnonymously();
       })
       .then(function() {
         db = cloudApp.database();
