@@ -21,7 +21,7 @@
     envId: 'breeze-0-d7gyop0ga59286558',   // 云开发环境 ID
     region: 'ap-shanghai',   // 环境地域（控制台可查）：ap-shanghai / ap-guangzhou / ap-beijing 等
     collection: 'sites',     // 社区收录集合名（需与云函数一致）
-    sdkUrl: 'https://static.cloudbase.net/cloudbase-js-sdk/2.9.1/cloudbase.full.js'
+    sdkUrl: 'https://static.cloudbase.net/cloudbase-js-sdk/2.17.3/cloudbase.full.js'
   };
 
   // ==================== 本地存储键（本地模式 / 回退缓存） ====================
@@ -87,7 +87,11 @@
     loadScript(CLOUD_CONFIG.sdkUrl)
       .then(function() {
         if (!window.cloudbase) throw new Error('CloudBase SDK 未注入');
-        cloudApp = window.cloudbase.init({ env: CLOUD_CONFIG.envId, region: CLOUD_CONFIG.region });
+        cloudApp = window.cloudbase.init({
+          env: CLOUD_CONFIG.envId,
+          region: CLOUD_CONFIG.region,
+          clientId: CLOUD_CONFIG.envId   // 新版 CloudBase Identity 需要 clientId
+        });
         return cloudApp.auth({ persistence: 'local' }).signInAnonymously();
       })
       .then(function() {
@@ -106,7 +110,7 @@
       .catch(function(err) {
         // 云端不可用 → 回退本地模式（记录原因，F12 控制台可查）
         isCloud = false;
-        lastError = err && err.message ? err.message : String(err);
+        lastError = err && err.message ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err));
         ready = true;
         console.warn('[KadaStore] 云端初始化失败，已回退本地模式。原因：', lastError);
         fireReady();
