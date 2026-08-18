@@ -1,7 +1,7 @@
 {
   "name": "咔哒 · 安全直达官方网站",
   "short_name": "咔哒",
-  "description": "搜索后第一个结果就是官方网站，安全直达，拒绝钓鱼",
+  "description": "官方网站导航搜索引擎,收录170+经人工核实的官方网站,拒绝钓鱼,安全直达",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# 禁止爬取管理后台
+Disallow: /admin
+
+# Sitemap
+Sitemap: https://foreverht106.github.io/ZHT106/sitemap.xml

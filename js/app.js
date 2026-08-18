@@ -221,6 +221,15 @@
       if (resultsSection && !resultsSection.classList.contains('hidden')) {
         renderResults(searchInput.value);
       }
+      // 支持 URL 参数搜索（SEO SearchAction）：?q=淘宝
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var q = params.get('q');
+        if (q) {
+          searchInput.value = q;
+          handleSearch();
+        }
+      } catch(e) { /* ignore */ }
     });
   }
 
