@@ -1139,7 +1139,15 @@
     }
     adminModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    renderAdminPanel();
+    // 先显示加载中，再从云端拉取最新数据
+    if (adminList) adminList.innerHTML = '<div class="admin-empty">加载中...</div>';
+    if (KadaStore.isCloud()) {
+      KadaStore.refresh().then(function() {
+        renderAdminPanel();
+      });
+    } else {
+      renderAdminPanel();
+    }
   }
 
   function closeAdminPanel() {

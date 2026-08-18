@@ -140,7 +140,27 @@
   function loadCloudSites() {
     return api('/sites?order=created_at.desc', { method: 'GET' })
       .then(function(list) {
-        cache = Array.isArray(list) ? list : [];
+        cache = (Array.isArray(list) ? list : []).map(function(s) {
+          // 数据库返回 snake_case，app.js 期望 camelCase，这里做映射
+          return {
+            id: s.id,
+            name: s.name,
+            url: s.url,
+            category: s.category,
+            description: s.description,
+            icp: s.icp,
+            keywords: typeof s.keywords === 'string' ? s.keywords : JSON.stringify(s.keywords || []),
+            verified: s.verified,
+            source: s.source,
+            status: s.status,
+            createdAt: s.created_at || s.createdAt,
+            submittedAt: s.created_at || s.createdAt || s.submittedAt,
+            userId: s.user_id || s.userId,
+            reviewedAt: s.reviewed_at || s.reviewedAt,
+            reviewNote: s.review_note || s.reviewNote,
+            reviewedBy: s.reviewed_by || s.reviewedBy
+          };
+        });
       });
   }
 
@@ -214,8 +234,10 @@
         };
         return api('/rpc/submit_site', { method: 'POST', body: payload })
           .then(function(r) {
-            // 提交成功后刷新缓存，让管理员面板立即看到 pending 记录
-            if (r.ok) loadCloudSites().catch(function() { /* ignore */ });
+            // 提交成功后等待缓存刷新完成再返回，确保调用方拿到最新数据
+            if (r.ok) {
+              return loadCloudSites().then(function() { return r; }).catch(function() { return r; });
+            }
             return r;
           });
       }
@@ -246,8 +268,8 @@
         return api('/rpc/admin_review', { method: 'POST', body: payload })
           .then(function(r) {
             if (r.ok) {
-              // 审核成功后刷新 approved 缓存
-              loadCloudSites().catch(function() { /* ignore */ });
+              // 审核成功后等待缓存刷新
+              return loadCloudSites().then(function() { return r; }).catch(function() { return r; });
             }
             return r;
           });
@@ -302,6 +324,14 @@
     // 登出（云端模式清内存凭据）
     clearAdminCred: function() {
       adminCred = null;
+    },
+
+    // 刷新云端数据（管理员面板打开时调用，确保看到最新提交）
+    refresh: function() {
+      if (isCloud) {
+        return loadCloudSites().then(function() { return true; }).catch(function() { return false; });
+      }
+      return Promise.resolve(false);
     },
 
     // 初始化完成回调（无论云端成功与否都会触发）
