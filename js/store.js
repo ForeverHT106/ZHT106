@@ -40,6 +40,7 @@
   var ready = false;      // 初始化流程已结束（成功或失败回退）
   var readyFns = [];      // onReady 回调
   var adminCred = null;   // 云端管理员登录凭据（仅存内存，不落盘）
+  var lastError = null;   // 最近一次初始化失败原因（诊断用）
 
   // ==================== 工具 ====================
   function readJSON(key, fallback) {
@@ -102,10 +103,12 @@
         ready = true;
         fireReady();
       })
-      .catch(function() {
-        // 云端不可用 → 静默回退本地模式，保证功能可用
+      .catch(function(err) {
+        // 云端不可用 → 回退本地模式（记录原因，F12 控制台可查）
         isCloud = false;
+        lastError = err && err.message ? err.message : String(err);
         ready = true;
+        console.warn('[KadaStore] 云端初始化失败，已回退本地模式。原因：', lastError);
         fireReady();
       });
   }
@@ -122,6 +125,8 @@
     isCloud: function() { return isCloud; },
     // 是否已配置云端（enabled + envId）
     configured: function() { return !!(CLOUD_CONFIG.enabled && CLOUD_CONFIG.envId); },
+    // 最近一次初始化失败原因（诊断用；成功为 null）
+    getLastError: function() { return lastError; },
 
     // 同步读取社区站点（云端：内存缓存；未就绪/本地：localStorage）
     getCommunitySitesSync: function() {
