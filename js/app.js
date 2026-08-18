@@ -6,6 +6,9 @@
 (function() {
   'use strict';
 
+  // 存储抽象层引用（js/store.js 提供，先于本文件加载）
+  const KadaStore = window.KadaStore;
+
   // ==================== DOM 元素引用 ====================
   const $ = id => document.getElementById(id);
 
@@ -90,6 +93,14 @@
   }
 
   function getAdmin() {
+    // 云端模式：凭据仅存内存（登录时由云函数校验，本地不落盘）
+    if (KadaStore.isCloud()) {
+      return {
+        username: KadaStore.getAdminUsername() || DEFAULT_ADMIN.username,
+        passwordHash: '',
+        createdAt: ''
+      };
+    }
     try {
       const a = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN));
       if (a && a.username && a.passwordHash) return a;
@@ -105,33 +116,37 @@
   }
 
   function isAdminLoggedIn() {
+    // 云端模式：要求内存中存在登录凭据（刷新后需重新登录）
+    if (KadaStore.isCloud()) return KadaStore.hasAdminCred();
     return sessionStorage.getItem(STORAGE_KEYS.ADMIN_SESSION) === '1';
   }
 
   function adminLogin(username, password) {
+    if (KadaStore.isCloud()) {
+      return KadaStore.adminLogin(username, password);
+    }
     const admin = getAdmin();
-    return admin.username === username.trim() && admin.passwordHash === hashPwd(password);
+    return Promise.resolve({
+      ok: admin.username === username.trim() && admin.passwordHash === hashPwd(password),
+      msg: '用户名或密码错误'
+    });
   }
 
   function adminLogout() {
     sessionStorage.removeItem(STORAGE_KEYS.ADMIN_SESSION);
+    KadaStore.clearAdminCred();
     if (adminModal) adminModal.classList.add('hidden');
     document.body.style.overflow = '';
   }
 
   // ==================== 社区收录池（提交后即时收录） ====================
+  // 数据源由 KadaStore 统一管理：配置云端后走云端数据库，否则回退 localStorage
   function getExtraSites() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.EXTRA_SITES)) || [];
-    } catch (e) {
-      return [];
-    }
+    return KadaStore.getCommunitySitesSync();
   }
 
   function saveExtraSites(sites) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.EXTRA_SITES, JSON.stringify(sites));
-    } catch (e) { /* 存储满时忽略 */ }
+    KadaStore.saveCommunitySites(sites);
   }
 
   // 规范化 URL 用于去重（去掉协议、尾部斜杠、www 前缀，返回字符串）
@@ -199,6 +214,14 @@
       if (isAdminLoggedIn()) setAdminLinkLabel('管理审核');
       else setAdminLinkLabel('管理员登录');
     }
+    // 云端数据就绪（或确认回退本地）后：刷新统计与当前视图，使社区数据切换到云端
+    KadaStore.onReady(function() {
+      updateStats();
+      if (adminModal && !adminModal.classList.contains('hidden')) renderAdminPanel();
+      if (resultsSection && !resultsSection.classList.contains('hidden')) {
+        renderResults(searchInput.value);
+      }
+    });
   }
 
   // ==================== 主题管理 ====================
@@ -421,17 +444,22 @@
       e.preventDefault();
       const username = $('adminUsernameInput').value.trim();
       const password = $('adminPasswordInput').value;
-      if (adminLogin(username, password)) {
-        sessionStorage.setItem(STORAGE_KEYS.ADMIN_SESSION, '1');
-        adminLoginModal.classList.add('hidden');
-        adminLoginForm.reset();
-        if (adminLoginMessage) { adminLoginMessage.classList.add('hidden'); adminLoginMessage.textContent = ''; }
-        openAdminPanel();
-      } else {
-        adminLoginMessage.textContent = '用户名或密码错误';
-        adminLoginMessage.className = 'admin-login-message error';
-        adminLoginMessage.classList.remove('hidden');
-      }
+      const loginBtn = adminLoginForm.querySelector('[type="submit"]');
+      if (loginBtn) { loginBtn.disabled = true; }
+      adminLogin(username, password).then(function(result) {
+        if (loginBtn) { loginBtn.disabled = false; }
+        if (result.ok) {
+          sessionStorage.setItem(STORAGE_KEYS.ADMIN_SESSION, '1');
+          adminLoginModal.classList.add('hidden');
+          adminLoginForm.reset();
+          if (adminLoginMessage) { adminLoginMessage.classList.add('hidden'); adminLoginMessage.textContent = ''; }
+          openAdminPanel();
+        } else {
+          adminLoginMessage.textContent = result.msg || '用户名或密码错误';
+          adminLoginMessage.className = 'admin-login-message error';
+          adminLoginMessage.classList.remove('hidden');
+        }
+      });
     });
 
     if (closeAdminLoginBtn) closeAdminLoginBtn.addEventListener('click', function() {
@@ -489,10 +517,12 @@
         return;
       }
       const result = changeAdminPassword(current, next);
-      changePwdMessage.textContent = result.msg;
-      changePwdMessage.className = 'admin-login-message ' + (result.ok ? 'success' : 'error');
-      changePwdMessage.classList.remove('hidden');
-      if (result.ok) changePwdForm.reset();
+      result.then(function(r) {
+        changePwdMessage.textContent = r.msg;
+        changePwdMessage.className = 'admin-login-message ' + (r.ok ? 'success' : 'error');
+        changePwdMessage.classList.remove('hidden');
+        if (r.ok) changePwdForm.reset();
+      });
     });
 
     // 全局键盘快捷键
@@ -981,31 +1011,33 @@
     const domainPart = normalizeUrlKey(url).split('/')[0].replace(/\.[a-z]+$/, '').replace(/[.-]/g, ' ');
     const keywords = [name, domainPart].filter(Boolean);
 
-    // 1) 即时收录进社区池（搜索立即可见，标记待审核）
-    const extraSites = getExtraSites();
-    const newSite = {
-      name, url, category, desc, icp, keywords,
-      verified: false, source: 'community',
-      status: STATUS.PENDING,
-      submittedAt: new Date().toISOString()
-    };
-    extraSites.unshift(newSite);
-    saveExtraSites(extraSites);
+    // 提交（云端模式写入云端数据库；本地模式写入 localStorage）→ 返回 {ok, msg, site}
+    const submitBtn = submitForm.querySelector('[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    KadaStore.submitSite({ name, url, category, desc, icp, keywords }).then(function(result) {
+      if (submitBtn) submitBtn.disabled = false;
+      if (!result.ok) {
+        showSubmitMessage(result.msg || '提交失败，请稍后重试', 'error');
+        return;
+      }
+      // 站点已由 store 插入（本地模式写盘 / 云端模式入缓存），此处仅处理附加逻辑
+      // 本地模式：同时记录原始提交单（云端模式已由云函数存储，无需本地冗余）
+      if (!KadaStore.isCloud()) {
+        try {
+          const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS)) || [];
+          submissions.push({ name, url, category, desc, icp, time: result.site.submittedAt });
+          localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+        } catch (err) { /* ignore */ }
+      }
 
-    // 2) 同时记录原始提交单（供管理员审核）
-    try {
-      const submissions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMISSIONS)) || [];
-      submissions.push({ name, url, category, desc, icp, time: newSite.submittedAt });
-      localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
-    } catch (err) { /* ignore */ }
+      // 刷新统计
+      updateStats();
 
-    // 3) 刷新统计
-    updateStats();
-
-    showSubmitMessage('✅ 已收录！「' + name + '」现已进入社区收录池（标记待核实），立即搜索即可找到', 'success');
-    clearSubmitDraft(); // 提交成功不再保留草稿
-    submitForm.reset();
-    setTimeout(closeSubmitModal, 3000);
+      showSubmitMessage('✅ 已收录！「' + name + '」现已进入社区收录池（标记待核实），立即搜索即可找到', 'success');
+      clearSubmitDraft(); // 提交成功不再保留草稿
+      submitForm.reset();
+      setTimeout(closeSubmitModal, 3000);
+    });
   }
 
   // ==================== 导出收录记录（管理员审核后正式收录） ====================
@@ -1045,19 +1077,24 @@
 
   // ==================== 管理员审核系统 ====================
 
-  // 更新某站点的审核状态
+  // 更新某站点的审核状态（云端模式走云函数，本地模式直改存储）→ Promise<boolean>
   function updateSiteStatus(url, status, note) {
-    const sites = getExtraSites();
-    const site = sites.find(function(s) { return s.url === url; });
-    if (!site) return false;
-    site.status = status;
-    site.reviewedAt = new Date().toISOString();
-    site.reviewNote = note || '';
-    site.reviewedBy = getAdmin().username;
-    site.verified = status === STATUS.APPROVED;
-    saveExtraSites(sites);
-    updateStats();
-    return true;
+    return KadaStore.reviewSite(url, status, note).then(function(r) {
+      if (!r.ok) return false;
+      // 同步本地展示缓存（与云端保持一致）
+      const sites = getExtraSites();
+      const site = sites.find(function(s) { return s.url === url; });
+      if (site) {
+        site.status = status;
+        site.reviewedAt = new Date().toISOString();
+        site.reviewNote = note || '';
+        site.reviewedBy = getAdmin().username;
+        site.verified = status === STATUS.APPROVED;
+        saveExtraSites(sites);
+      }
+      updateStats();
+      return true;
+    });
   }
 
   function formatTime(iso) {
@@ -1202,33 +1239,29 @@
 
   // 通过 / 拒绝 / 恢复 处理
   function handleAdminAction(action, url, noteInput) {
-    if (action === 'approve') {
-      if (updateSiteStatus(url, STATUS.APPROVED, noteInput ? noteInput.value : '')) {
-        renderAdminPanel();
-      }
-    } else if (action === 'reject') {
-      if (updateSiteStatus(url, STATUS.REJECTED, noteInput ? noteInput.value : '')) {
-        renderAdminPanel();
-      }
-    } else if (action === 'restore') {
-      if (updateSiteStatus(url, STATUS.PENDING, '')) {
-        renderAdminPanel();
-      }
-    }
+    const next = action === 'approve' ? STATUS.APPROVED :
+                 action === 'reject'  ? STATUS.REJECTED : STATUS.PENDING;
+    const note = action === 'restore' ? '' : (noteInput ? noteInput.value : '');
+    updateSiteStatus(url, next, note).then(function(ok) {
+      if (ok) renderAdminPanel();
+    });
   }
 
-  // 修改管理员密码
+  // 修改管理员密码（云端模式走云函数；本地模式直改 localStorage）→ Promise<{ok, msg}>
   function changeAdminPassword(currentPwd, newPwd) {
+    if (KadaStore.isCloud()) {
+      return KadaStore.changePassword(currentPwd, newPwd);
+    }
     const admin = getAdmin();
     if (hashPwd(currentPwd) !== admin.passwordHash) {
-      return { ok: false, msg: '当前密码不正确' };
+      return Promise.resolve({ ok: false, msg: '当前密码不正确' });
     }
     if (newPwd.length < 6) {
-      return { ok: false, msg: '新密码至少 6 位' };
+      return Promise.resolve({ ok: false, msg: '新密码至少 6 位' });
     }
     admin.passwordHash = hashPwd(newPwd);
     try { localStorage.setItem(STORAGE_KEYS.ADMIN, JSON.stringify(admin)); } catch (e) { /* ignore */ }
-    return { ok: true, msg: '✅ 密码已更新' };
+    return Promise.resolve({ ok: true, msg: '✅ 密码已更新' });
   }
 
   // ==================== 工具函数 ====================
